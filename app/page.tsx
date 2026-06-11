@@ -1,7 +1,7 @@
-import RecapPlayer from "@/src/components/RecapPlayer";
+import RecapExperience from "@/src/components/RecapExperience";
 import type { Recap } from "@/src/types/scene";
 import sample from "@/public/sample/sample-recap.json";
 
 export default function Home() {
-  return <RecapPlayer recap={sample as unknown as Recap} />;
+  return <RecapExperience recap={sample as unknown as Recap} />;
 }

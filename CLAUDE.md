@@ -31,6 +31,13 @@ export type Recap = {
 
 Sample data for building/demoing the player: `public/sample/sample-recap.json`.
 
+## API routes
+- `POST /api/voice` — `{ text }` → ElevenLabs TTS, returns `audio/mpeg`. Needs
+  `ELEVENLABS_API_KEY` in `.env.local` (optional `ELEVENLABS_VOICE_ID`, defaults
+  to "Adam"). Client-side `src/lib/voiceover.ts` fans out one call per scene in
+  parallel and fills `audioPath` with blob URLs; failures leave `audioPath`
+  empty so the player falls back to `durationMs` — playback never breaks.
+
 ## Build order
 1. Player on hardcoded JSON
 2. Claude narrator (raw session material → scene JSON)
