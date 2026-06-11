@@ -13,11 +13,51 @@ const serif = Cormorant_Garamond({
 const TITLE_MS = 2800;
 const FIN_MS = 2600;
 
+// Tiny silent WAV played synchronously inside the click gesture so the browser
+// unlocks the <audio> element for the programmatic plays that come later.
+function silentWavUri(): string {
+  const sampleRate = 8000;
+  const samples = 8;
+  const buf = new ArrayBuffer(44 + samples);
+  const v = new DataView(buf);
+  const str = (o: number, s: string) => {
+    for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i));
+  };
+  str(0, "RIFF");
+  v.setUint32(4, 36 + samples, true);
+  str(8, "WAVE");
+  str(12, "fmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, sampleRate, true);
+  v.setUint32(28, sampleRate, true);
+  v.setUint16(32, 1, true);
+  v.setUint16(34, 8, true);
+  str(36, "data");
+  v.setUint32(40, samples, true);
+  for (let i = 0; i < samples; i++) v.setUint8(44 + i, 128);
+  let bin = "";
+  new Uint8Array(buf).forEach((b) => (bin += String.fromCharCode(b)));
+  return "data:audio/wav;base64," + btoa(bin);
+}
+
 // Beat timeline: -1 idle · 0 title card · 1..N scenes · N+1 fin fade · N+2 replay
-export default function RecapPlayer({ recap }: { recap: Recap }) {
-  const n = recap.scenes.length;
+export default function RecapPlayer({
+  recap,
+  prepare,
+}: {
+  recap: Recap;
+  // Optional async step run once on first play (e.g. voiceover generation);
+  // its result replaces the recap before the title card rolls.
+  prepare?: () => Promise<Recap | null>;
+}) {
+  const [effective, setEffective] = useState(recap);
+  const n = effective.scenes.length;
   const [beat, setBeat] = useState(-1);
   const [paused, setPaused] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const preparedRef = useRef(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // remaining/started let pause() freeze the countdown and resume() re-arm it
@@ -57,7 +97,7 @@ export default function RecapPlayer({ recap }: { recap: Recap }) {
       return;
     }
     if (beat <= n) {
-      const scene = recap.scenes[beat - 1];
+      const scene = effective.scenes[beat - 1];
       const advance = () => setBeat(beat + 1);
       const a = audioRef.current;
       if (scene.audioPath && a) {
@@ -73,14 +113,31 @@ export default function RecapPlayer({ recap }: { recap: Recap }) {
       return;
     }
     schedule(FIN_MS, () => setBeat(n + 2));
-  }, [beat, n, recap.scenes, schedule, clearTimer]);
+  }, [beat, n, effective.scenes, schedule, clearTimer]);
 
   useEffect(() => () => clearTimer(), [clearTimer]);
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     setPaused(false);
+    if (prepare && !preparedRef.current) {
+      preparedRef.current = true;
+      const a = audioRef.current;
+      if (a) {
+        // consume the click gesture to unlock programmatic audio later
+        a.src = silentWavUri();
+        a.play().catch(() => {});
+      }
+      setPreparing(true);
+      try {
+        const r = await prepare();
+        if (r) setEffective(r);
+      } catch {
+        // keep the silent recap — playback must never break
+      }
+      setPreparing(false);
+    }
     setBeat(0);
-  }, []);
+  }, [prepare]);
 
   const togglePause = useCallback(() => {
     setPaused((p) => {
