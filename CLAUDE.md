@@ -37,6 +37,21 @@ Sample data for building/demoing the player: `public/sample/sample-recap.json`.
   to "Adam"). Client-side `src/lib/voiceover.ts` fans out one call per scene in
   parallel and fills `audioPath` with blob URLs; failures leave `audioPath`
   empty so the player falls back to `durationMs` — playback never breaks.
+- `POST /api/narrate` — raw material `{ game, playtimeHours?, achievements?,
+  notes?, media[] }` → `{ recap, source }`. Uses Claude (`claude-opus-4-8`,
+  structured outputs) with `ANTHROPIC_API_KEY`; without a key or on failure it
+  returns a template recap (`source: "fallback"`) so the flow never breaks.
+- `POST /api/steam` — `{ id }` (SteamID64 / vanity / profile URL) → resolved
+  `steamId` + top games by recent playtime. Needs `STEAM_API_KEY`.
+- `POST /api/steam/game` — `{ steamId?, appid }` → real screenshots + trailer
+  mp4 from the public Steam store API (no key) + best-effort achievements.
+
+## Flow
+Home page = `src/components/CollectorFlow.tsx`: Steam ID input (with demo
+profile + sample-recap escape hatches) → game cards → compose (seeded media
+from `public/seeded/manifest.json` first, then Steam media; notes; screenshot
+upload) → `/api/narrate` → `RecapExperience` (player + ElevenLabs voiceover on
+play).
 
 ## Build order
 1. Player on hardcoded JSON
