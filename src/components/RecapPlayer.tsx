@@ -163,8 +163,8 @@ export default function RecapPlayer({
   }, []);
 
   const onSurfaceClick = () => {
-    if (beat === -1) start();
-    else if (beat === n + 2) start();
+    if (preparing) return;
+    if (beat === -1 || beat === n + 2) start();
     else togglePause();
   };
 
@@ -174,7 +174,7 @@ export default function RecapPlayer({
       className="fixed inset-0 select-none cursor-pointer overflow-hidden bg-black"
     >
       {/* scene layers, all mounted so media preloads; crossfade via opacity */}
-      {recap.scenes.map((scene, i) => {
+      {effective.scenes.map((scene, i) => {
         const sceneBeat = i + 1;
         const active = beat === sceneBeat;
         const started = beat >= sceneBeat && beat <= n + 2;
@@ -236,12 +236,12 @@ export default function RecapPlayer({
         {beat >= 0 && beat <= 1 && (
           <>
             <p className="title-in mb-7 text-xs uppercase tracking-[0.55em] text-neutral-500 md:text-sm">
-              {recap.game}
+              {effective.game}
             </p>
             <h1
               className={`${serif.className} title-in text-center text-5xl font-medium text-neutral-100 md:text-7xl`}
             >
-              {recap.title}
+              {effective.title}
             </h1>
           </>
         )}
@@ -271,10 +271,10 @@ export default function RecapPlayer({
       </div>
 
       {/* idle: single play button */}
-      {beat === -1 && (
+      {beat === -1 && !preparing && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-9 bg-black">
           <p className="text-xs uppercase tracking-[0.55em] text-neutral-600">
-            {recap.game}
+            {effective.game}
           </p>
           <button
             aria-label="Play recap"
@@ -290,7 +290,23 @@ export default function RecapPlayer({
           <p
             className={`${serif.className} text-lg italic tracking-wide text-neutral-600`}
           >
-            {recap.title}
+            {effective.title}
+          </p>
+        </div>
+      )}
+
+      {/* voiceover generation veil */}
+      {preparing && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-black">
+          <div className="flex gap-2">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-400 [animation-delay:0ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-400 [animation-delay:200ms]" />
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-neutral-400 [animation-delay:400ms]" />
+          </div>
+          <p
+            className={`${serif.className} animate-pulse text-xl italic tracking-wide text-neutral-400`}
+          >
+            Summoning the narrator…
           </p>
         </div>
       )}
@@ -328,7 +344,8 @@ export default function RecapPlayer({
 
       <audio
         ref={audioRef}
-        onEnded={() => setBeat((b) => Math.min(b + 1, n + 1))}
+        // advance only while inside scenes — the unlock wav also fires onEnded
+        onEnded={() => setBeat((b) => (b >= 1 && b <= n ? b + 1 : b))}
         className="hidden"
       />
     </div>
