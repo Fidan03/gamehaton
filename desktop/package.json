@@ -1,0 +1,13 @@
+{
+  "name": "recap-desktop-collector",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "cross-env-shell \"electron .\" || electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.2.0"
+  }
+}
