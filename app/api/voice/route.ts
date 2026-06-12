@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 const DEFAULT_VOICE_ID = "pNInz6obpgDQGcFmaJgB";
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
+  const apiKey = "sk_70ddc817c4e29c9f123768c737bede8ba01d138970f2ca09";
   if (!apiKey) {
     return NextResponse.json(
       { error: "ELEVENLABS_API_KEY is not set — add it to .env.local" },
