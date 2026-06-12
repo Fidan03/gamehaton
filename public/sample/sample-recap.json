@@ -1,0 +1,30 @@
+{
+  "game": "Elden Ring",
+  "title": "First Steps in the Lands Between",
+  "scenes": [
+    {
+      "id": "scene-1",
+      "narration": "A Tarnished awakens in darkness, called by grace toward a shattered golden ring.",
+      "mediaType": "image",
+      "mediaPath": "https://picsum.photos/1280/720?random=1",
+      "audioPath": "",
+      "durationMs": 4000
+    },
+    {
+      "id": "scene-2",
+      "narration": "Limgrave stretches endless before them — and from the shadows, the first knight falls.",
+      "mediaType": "image",
+      "mediaPath": "https://picsum.photos/1280/720?random=2",
+      "audioPath": "",
+      "durationMs": 4000
+    },
+    {
+      "id": "scene-3",
+      "narration": "At the gates of Stormveil, Margit waits. This night, legends are forged in defeat.",
+      "mediaType": "image",
+      "mediaPath": "https://picsum.photos/1280/720?random=3",
+      "audioPath": "",
+      "durationMs": 4000
+    }
+  ]
+}

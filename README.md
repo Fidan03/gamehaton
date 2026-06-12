@@ -1,34 +1,293 @@
-Gamehaton
-This is a Next.js project bootstrapped with create-next-app.
+# 🎮 Game Recap
 
-Getting Started
-First, run the development server:
+**Game Recap** is a cinematic gaming recap generator. The goal is to help players quickly remember where they left off when returning to a game after a long break.
 
-Bash
-`npm run dev`
-or
-`yarn dev`
-or
-`pnpm dev`
-or
-`bun dev`
+The app uses gameplay activity, Steam data, achievements, screenshots, clips, and optional player notes to generate a dramatic, narrated recap in the style of a movie trailer or a “previously on...” sequence.
 
-Open http://localhost:3000 with your browser to see the result.
+## 🎯 Project Goal and Business Logic
 
-💡 Tip: You can start editing the page by modifying app/page.tsx. The page auto-updates as you edit the file.
+Many players return to story-heavy RPGs and open-world games after weeks or months away. The first problem they face is simple:
 
-This project uses next/font to automatically optimize and load Geist, a new font family for Vercel.
+> “Where was I?”
 
-Learn More
-To learn more about Next.js, take a look at the following resources:
+Game Recap turns that problem into a product experience:
 
-Next.js Documentation - Learn about Next.js features and API.
+- collects recent gaming memories and context;
+- turns raw gameplay material into a short emotional recap;
+- uses AI to write dramatic narration;
+- generates AI voiceover with ElevenLabs;
+- plays the result in a fullscreen cinematic player.
 
-Learn Next.js - An interactive Next.js tutorial.
+From a business perspective, Game Recap is close to the idea of **“Spotify Wrapped, but for the worlds you have lived in.”** Players already enjoy sharing achievements, playtime, clips, and screenshots. Game Recap transforms those scattered pieces into a more emotional, watchable, and shareable story.
 
-Next.js GitHub Repository - Your feedback and contributions are welcome!
+Potential use cases:
 
-Deploy on Vercel
-The easiest way to deploy your Next.js app is to use the Vercel Platform from the creators of Next.js.
+- players returning to a game after a long break;
+- Twitch and YouTube creators;
+- gaming communities;
+- shareable personal gaming memories;
+- platform-level recap features for game libraries.
 
-Check out our Next.js deployment documentation for more details.
+## 🧩 Problem We Solve
+
+Gaming memories are usually fragmented:
+
+- story progress and quests stay inside the game;
+- achievements live on Steam or other platforms;
+- screenshots and clips are stored in different folders or services;
+- after a long break, the player loses context.
+
+Game Recap brings those fragments together and gives the player a “previously on...” moment before they continue playing. Instead of reading old quest logs or searching through folders, the player watches a short cinematic recap of their own adventure.
+
+## ✨ Key Features
+
+- 🎮 Steam profile lookup and game list collection
+- 🕹️ Game selection flow
+- 🏆 Achievement and media collection
+- 🖼️ Optional player notes and screenshot upload
+- ✍️ AI-generated dramatic narration using Claude/Anthropic
+- 🎙️ Voiceover generation using ElevenLabs
+- 🎬 Fullscreen cinematic recap player
+- 🛟 Demo profile and sample recap fallback
+- 📽️ Presentation page for hackathon pitching
+- 🖥️ Initial Electron desktop shell
+
+## 🛠️ Technologies Used
+
+Frontend:
+
+- Next.js 14
+- React 18
+- TypeScript
+- Tailwind CSS
+- Next Font
+
+Backend/API:
+
+- Next.js App Router API routes
+- Steam Web API
+- Steam Store API
+- Anthropic SDK
+- ElevenLabs Text-to-Speech API
+
+Desktop:
+
+- Electron
+- Electron preload bridge
+- Electron Builder
+
+Tooling:
+
+- npm
+- TypeScript
+- PostCSS
+- Tailwind CSS
+- concurrently
+- wait-on
+
+## 🏗️ System Architecture and Technical Approach
+
+The project supports two main usage modes:
+
+1. Web application
+2. Desktop shell
+
+### 🌐 Web Flow
+
+In the web version, the user enters a SteamID64, vanity name, or Steam profile URL. The app uses the Steam API to fetch games, lets the user choose a game, and then prepares recap material using game data, achievements, media, and optional notes.
+
+Flow:
+
+```text
+User Input
+  -> Steam API
+  -> Game + Achievement + Media Data
+  -> Narration API
+  -> Scene JSON
+  -> Voice API
+  -> Cinematic Player
+```
+
+### 🧾 Scene JSON Contract
+
+The central technical decision is a shared scene contract. The cinematic player only consumes this structure and does not need to know where the data came from.
+
+```ts
+type Scene = {
+  id: string;
+  narration: string;
+  mediaType: "image" | "video";
+  mediaPath: string;
+  audioPath?: string;
+  durationMs: number;
+};
+
+type Recap = {
+  game: string;
+  title: string;
+  scenes: Scene[];
+};
+```
+
+This allows the team to work on frontend, backend, AI generation, and desktop collection independently. As long as every data source produces the same scene JSON, the player remains unchanged.
+
+### 🔌 API Routes
+
+`POST /api/steam`
+
+Accepts a SteamID64, vanity name, or profile URL. Uses the Steam Web API to return the player’s game list.
+
+`POST /api/steam/game`
+
+Fetches store media and player achievements for the selected game.
+
+`POST /api/narrate`
+
+Accepts game name, playtime, achievements, notes, and media. If an Anthropic API key is available, it generates AI narration. If not, it returns a fallback recap.
+
+`POST /api/voice`
+
+Converts scene narration text into audio using ElevenLabs Text-to-Speech.
+
+### 🖥️ Electron Approach
+
+The Electron layer provides the starting architecture for a desktop version:
+
+- `electron/main.js` creates the browser window;
+- in development, it connects to the Next.js dev server;
+- in production, it is prepared to work with the built Next.js output;
+- `electron/preload.js` exposes a safe bridge to the renderer.
+
+The future desktop goal is to:
+
+- detect running games;
+- read NVIDIA ShadowPlay / Instant Replay clips;
+- capture screenshots and local media;
+- generate more realistic recaps from local gameplay data.
+
+## ⚙️ Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/Fidan03/gamehaton.git
+cd gamehaton
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a `.env.local` file:
+
+```bash
+STEAM_API_KEY=your_steam_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
+ELEVENLABS_VOICE_ID=optional_voice_id
+```
+
+Environment variables:
+
+- `STEAM_API_KEY` is required for real Steam profile and achievement data.
+- `ANTHROPIC_API_KEY` is used for AI narration. Without it, the app uses fallback narration.
+- `ELEVENLABS_API_KEY` is required for voiceover audio generation.
+- `ELEVENLABS_VOICE_ID` is optional. If omitted, the default voice is used.
+
+## 🚀 Running the Project
+
+Start the web development server:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Production build:
+
+```bash
+npm run build
+npm run start
+```
+
+Electron desktop development:
+
+```bash
+npm run desktop
+```
+
+Electron app build:
+
+```bash
+npm run dist
+```
+
+## 🧪 Demo Mode
+
+The app is designed to remain demoable even without all API keys:
+
+- `use demo profile` opens a demo game library;
+- `watch sample recap` plays a prepared sample recap;
+- if AI narration is unavailable, the app returns fallback narration;
+- if voiceover generation fails, the player falls back to scene timing with `durationMs`.
+
+This demo-safety approach is important for hackathon presentations because the main cinematic player remains available even if an external API fails.
+
+## 📁 Project Structure
+
+```text
+app/
+  api/
+    narrate/       AI narration endpoint
+    steam/         Steam profile/game endpoints
+    voice/         ElevenLabs voice endpoint
+  presentation/    Hackathon presentation page
+  page.tsx         Main app page
+
+electron/
+  main.js          Electron main process
+  preload.js       Secure preload bridge
+
+public/
+  sample/          Sample recap data
+  seeded/          Seeded media manifest
+
+src/
+  components/
+    CollectorFlow.tsx       Steam/demo collection flow
+    RecapExperience.tsx     Player wrapper
+    RecapPlayer.tsx         Cinematic recap player
+    PresentationDeck.tsx    Presentation UI
+  lib/
+    voiceover.ts            Client voiceover helper
+  types/
+    scene.ts                Scene/Recap contract
+```
+
+## 👥 Team
+
+- Fidan - Frontend
+- Sabina - Frontend
+- Tural - Backend
+- Abdulqadir - Backend
+
+## 🗺️ Roadmap
+
+- 🕵️ Real running game detection in the desktop app
+- 🎞️ NVIDIA ShadowPlay folder watcher
+- 🔔 Automatic “welcome back” recap trigger
+- 🔗 Shareable recap links
+- 🎮 PlayStation/Xbox integrations
+- 🗂️ Larger media import system
+- 📤 More polished video export and sharing flow
+
+## ✅ Conclusion
+
+Game Recap is a cinematic AI experience designed to restore lost gaming context. Technically, it combines APIs, AI narration, text-to-speech, media playback, and a desktop-oriented architecture. From a product perspective, it turns fragmented gaming memories into an emotional and shareable recap.
