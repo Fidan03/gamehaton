@@ -1,6 +1,7 @@
 "use client";
 
 import { Cormorant_Garamond } from "next/font/google";
+import Link from "next/link";
 import { useState } from "react";
 import RecapExperience from "@/src/components/RecapExperience";
 import type { Recap } from "@/src/types/scene";
@@ -167,6 +168,14 @@ export default function CollectorFlow({ sample }: { sample: Recap }) {
   return (
     <main className="min-h-screen bg-black px-6 py-14 text-neutral-200">
       <div className="mx-auto max-w-3xl">
+        <div className="mb-8 flex justify-end">
+          <Link
+            href="/presentation"
+            className="rounded border border-cyan-200/30 px-4 py-2 text-xs uppercase tracking-[0.25em] text-cyan-100 transition-colors hover:border-cyan-100 hover:bg-cyan-950/20"
+          >
+            presentation
+          </Link>
+        </div>
         <header className="mb-12 text-center">
           <p className="mb-3 text-[11px] uppercase tracking-[0.5em] text-neutral-600">
             cinematic game recap
